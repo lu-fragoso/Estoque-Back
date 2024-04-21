@@ -9,10 +9,10 @@ app.use(express.json());
 
 // Rota de registro
 app.post('/register', async (req, res) => {
-  const { username, password } = req.body;
+  const { name, email, password } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    connection.query('INSERT INTO users (username, password) VALUES (?, ?)', [username, hashedPassword], (error, result) => {
+    connection.query('INSERT INTO users (nome, email, senha) VALUES (?, ?, ?)', [name, email, hashedPassword], (error, result) => {
       if (error) {
         res.status(500).send('Erro ao registrar usuário');
       } else {
@@ -47,6 +47,32 @@ app.post('/login', (req, res) => {
 
 app.get('/users', (req, res) => {
   connection.query('SELECT * FROM USERS', (error, result) => {
+    if (error) {
+      res.status(500).send('Erro ao obter usuários');
+    } else {
+      res.json(result);
+    }
+  });
+});
+
+// Rota de registro Produto
+app.post('/registerproduct', async (req, res) => {
+  const { name, description, image, price } = req.body;
+  try {
+    connection.query('INSERT INTO product (nome, descricao, imagem, valor) VALUES (?, ?, ?, ?)', [name, description, image, price], (error, result) => {
+      if (error) {
+        res.status(500).send('Erro ao registrar produto');
+      } else {
+        res.status(201).send('Produto registrado com sucesso');
+      }
+    });
+  } catch (error) {
+    res.status(500).send('Erro ao registrar produto');
+  }
+});
+
+app.get('/product', (req, res) => {
+  connection.query('SELECT * FROM PRODUCT', (error, result) => {
     if (error) {
       res.status(500).send('Erro ao obter usuários');
     } else {
