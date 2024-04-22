@@ -26,20 +26,23 @@ app.post('/register', async (req, res) => {
 
 // Rota de login
 app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-  connection.query('SELECT * FROM users WHERE username = ?', [username], async (error, result) => {
+  const { email, password } = req.body;
+  connection.query('SELECT * FROM users WHERE email = ?', [email], async (error, result) => {
     if (error || result.length === 0) {
       return res.status(401).send('Usuário ou senha incorretos');
     }
     const user = result[0];
+    console.log('Usuário:', user);
     try {
-      if (await bcrypt.compare(password, user.password)) {
+      if (await bcrypt.compare(password, user.senha)) {
         const token = jwt.sign({ id: user.id }, 'secreto', { expiresIn: '1h' });
         res.status(200).json({ token });
       } else {
         res.status(401).send('Usuário ou senha incorretos');
       }
-    } catch {
+    } catch (error) {
+      console.log('Comparando', password, 'com', user.senha);
+      console.error('Erro ao autenticar usuário:', error);
       res.status(500).send('Erro ao autenticar usuário');
     }
   });
