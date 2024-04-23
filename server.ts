@@ -107,6 +107,53 @@ app.get('/products/:id', (req, res) => {
   });
 });
 
+// Rota para editar produto
+app.put('/products/:id/edit', (req, res) => {
+  const { id } = req.params;
+  const { name, description, price } = req.body;
+  try {
+    connection.query('UPDATE product SET nome = ?, descricao = ?, valor = ? WHERE id = ?', [name, description, price, id], (error) => {
+      if (error) {
+        res.status(500).json({ message: 'Erro ao atualizar produto' });
+      } else {
+        res.status(200).json({ message: 'Produto atualizado com sucesso', success: true });
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao atualizar produto' });
+  }
+});
+
+// Rota para deletar produto
+app.delete('/products/:id/delete', (req, res) => {
+  const { id } = req.params;
+
+  // Deletar registros relacionados na tabela 'stock'
+  connection.query('DELETE FROM stock WHERE id_produto = ?', [id], (error) => {
+    if (error) {
+      res.status(500).send('Erro ao deletar stock do produto');
+      return;
+    }
+
+    // Deletar registros relacionados na tabela 'log'
+    connection.query('DELETE FROM log WHERE id_produto = ?', [id], (error) => {
+      if (error) {
+        res.status(500).send('Erro ao deletar logs do produto');
+        return;
+      }
+
+      // Deletar produto
+      connection.query('DELETE FROM product WHERE id = ?', [id], (error) => {
+        if (error) {
+          res.status(500).send('Erro ao deletar produto');
+        } else {
+          res.status(200).json({ message: 'Produto deletado com sucesso', success: true });
+        }
+      });
+    });
+  });
+});
+
 // Rota verificar quantidade
 app.get('/products/:id/qtd', async (req, res) => {
   const { id } = req.params;
@@ -128,7 +175,7 @@ app.get('/products/:id/qtd', async (req, res) => {
 });
 
 //Rota para editar quantidade do produto
-app.put('/products/:id/edit', async (req, res) => {
+app.put('/products/:id/editquantidade', async (req, res) => {
   const { id } = req.params;
   const { quantity, userId, tipo } = req.body;
   try {
@@ -169,6 +216,19 @@ app.put('/products/:id/edit', async (req, res) => {
     res.status(500).send('Erro ao atualizar quantidade do produto');
   }
 });
+
+//Rota para listar logs do produto
+app.get('/products/:id/logs', (req, res) => {
+  const { id } = req.params;
+  connection.query('SELECT * FROM log WHERE id_produto = ?', [id], (error, result) => {
+    if (error) {
+      res.status(500).send('Erro ao obter logs');
+    } else {
+      res.json(result);
+    }
+  });
+});
+
 
 //Rota para listar Produtos
 app.get('/product', (req, res) => {
